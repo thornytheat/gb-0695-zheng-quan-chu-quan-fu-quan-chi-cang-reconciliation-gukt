@@ -1,0 +1,12 @@
+section,bond_id,name,initial_price,event_id,eff_date,new_price,reason,version,instruction_id,account,received_at,confirmed,face_amount,holding_face
+meta,,,,2026-11-19,,,,,,,,,,
+bond,113001,示例转债,10.0000,,,,,,,,,,,
+bond,113002,二号转债,12.5000,,,,,,,,,,,
+price_event,113001,,,E1,2026-11-10,9.5000,分红除息,1,,,,,,
+price_event,113001,,,E2,2026-11-18,9.0000,年度分红,2,,,,,,
+instruction,113001,,,,,,,,C001,ACC-A,2026-11-12,true,2000,5000
+instruction,113001,,,,,,,,C002,ACC-B,2026-11-16,false,3000,8000
+instruction,113001,,,,,,,,C003,ACC-C,2026-11-19,true,1000,1000
+instruction,113001,,,,,,,,C004,ACC-D,2026-11-15,true,1500,6000
+instruction,113002,,,,,,,,C005,ACC-E,2026-11-17,true,2500,10000
+instruction,113002,,,,,,,,C006,ACC-F,2026-11-18,false,1700,4000

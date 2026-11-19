@@ -1,5 +1,6 @@
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import unicodedata
+from datetime import date, datetime
 from app.errors import DomainError
 SENTINELS = {'', '-', 'N/A', 'NULL', '未知'}
 def number(value, nullable=False):
@@ -15,6 +16,8 @@ def fmt(value, places='0.0001'):
     return str(Decimal(value).quantize(Decimal(places), rounding=ROUND_HALF_UP))
 def serial(value):
     if isinstance(value, Decimal): return str(value)
+    if isinstance(value, datetime): return value.strftime('%Y-%m-%dT%H:%M:%SZ')
+    if isinstance(value, date): return value.isoformat()
     if isinstance(value, dict): return {str(k):serial(v) for k,v in value.items()}
     if isinstance(value, (list,tuple)): return [serial(v) for v in value]
     return value

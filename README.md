@@ -21,3 +21,9 @@ SQLite保存在命名卷records；容器重建保留历史。只在确认不再�
 ## 定义与限制
 
 详见docs/DATA-DICTIONARY.md、docs/DEPTH.md。单文件最大5MB/一万行，本工具按确定性文件离线复算，不查询外部业务系统。源码位于app，测试位于tests，样例位于sample_data。
+
+## 可转债转股复核
+
+进入转股期后的分批转股申报，在分红调整转股价前后按处理日统一裁决新价，拆分应转股票、
+零头折现现金与保留整张债券，整批对账相符且复核通过才可发布，重试不重复转股。
+入口 `/conv/`，规则与接口见 docs/CONV.md，样例见 sample_data/conv/conversion.csv。

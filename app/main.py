@@ -13,6 +13,7 @@ from app.modules.m4_factors.handler import bp as bp4
 from app.modules.m5_holdings.handler import bp as bp5
 from app.modules.m6_cash.handler import bp as bp6
 from app.modules.m7_revisions.handler import bp as bp7
+from app.conv.handler import bp as bpconv
 app=Flask(__name__)
 app.config['MAX_CONTENT_LENGTH']=5*1024*1024
 app.json.ensure_ascii=False
@@ -32,11 +33,12 @@ app.register_blueprint(bp4)
 app.register_blueprint(bp5)
 app.register_blueprint(bp6)
 app.register_blueprint(bp7)
+app.register_blueprint(bpconv)
 @app.before_request
 def validate_request_object():
     if request.method!='POST': return None
     if request.files:
-        if request.path!='/api/run' or 'file' not in request.files:
+        if (request.path!='/api/run' and request.path!='/conv/api/run') or 'file' not in request.files:
             raise DomainError('REQUEST','上传必须使用file字段',400)
         return None
     if not request.is_json:

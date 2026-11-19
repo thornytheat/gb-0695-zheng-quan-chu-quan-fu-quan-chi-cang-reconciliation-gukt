@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>可转债转股复核</title>
+<link rel="stylesheet" href="/static/theme.css">
+<link rel="stylesheet" href="/static/layout.css">
+<link rel="stylesheet" href="/static/components.css">
+<script defer src="/static/conv/actions.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="brand">可转债转股<span>CONVERTIBLE / CONVERSION</span></div>
+    <nav>
+      {% for n in range(1,6) %}
+      <a href="/conv/work/{{n}}?run_id={{run.manifest.run_id}}" class="{{'active' if stage==n}}">{{'%02d'|format(n)}}　{{stage_names[n]}}</a>
+      {% endfor %}
+    </nav>
+    <small>处理日 {{run.manifest.processing_date}}<br>规则版本 {{run.manifest.rule_version}}<br>币种 CNY　面值 100/张</small>
+  </aside>
+  <div class="work">
+    <header class="topbar">
+      <strong>{{current.name}}</strong>
+      <span class="badge">{{run.manifest.run_id[:8]}}</span>
+      <span class="badge">{{'已发布' if published else run.decision}}</span>
+      <button class="primary" id="demo">运行样例</button>
+      <a class="btn" href="/conv/api/evidence.csv?run_id={{run.manifest.run_id}}">证据CSV</a>
+    </header>
+    <main class="content">
+      <div class="kpis">
+        {% for m in current.metrics %}
+        <div class="kpi"><span>{{m[0]}}</span><b>{{m[1]|display}} <small>{{m[2]}}</small></b></div>
+        {% endfor %}
+        <div class="kpi"><span>整批对账</span><b>{{'相符' if run.reconciliation.balanced else '差异'}}</b></div>
+        <div class="kpi"><span>复核状态</span><b>{{run.decision}} r{{run.revision}}</b></div>
+      </div>
+      <div class="panel-grid">
+        <section class="panel wide">
+          <div class="panel__head"><h2>{{current.name}}明细</h2><span>{{current.rows|length}} 条</span></div>
+          <div class="scroll">
+            {% if current.rows %}
+            <table>
+              <thead><tr>{% for key in current.rows[0] %}<th>{{key}}</th>{% endfor %}</tr></thead>
+              <tbody>
+              {% for row in current.rows %}
+                <tr class="{{'diff' if row['结论']=='差异' or row['状态']=='阻断' or row['处置']=='重复跳过'}}">
+                  {% for value in row.values() %}<td title="{{value}}">{{value|display}}</td>{% endfor %}
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+            {% else %}<div class="empty">无记录。</div>{% endif %}
+          </div>
+        </section>
+
+        <section class="panel wide">
+          <div class="panel__head"><h2>转股明细复核（应转股票 / 剩余债券 / 折现现金）</h2><span>{{run.detail|length}} 笔</span></div>
+          <div class="scroll">
+            <table>
+              <thead><tr>
+                <th>申报号</th><th>债券</th><th>裁决</th><th>处置</th><th>持仓面值</th><th>申请面值</th>
+                <th>适用转股价</th><th>应转股票</th><th>转股面值</th><th>零头面值</th>
+                <th>折现现金</th><th>保留债券面值</th><th>保留张数</th>
+              </tr></thead>
+              <tbody>
+              {% for d in run.detail %}
+                <tr class="{{'diff' if d['处置']!='转股'}}">
+                  <td>{{d['申报号']}}</td><td>{{d['债券']}}</td><td>{{d['裁决']}}</td><td>{{d['处置']}}</td>
+                  <td>{{d['持仓面值']}}</td><td>{{d['申请转股面值']}}</td><td>{{d['适用转股价']}}</td>
+                  <td><b>{{d['应转股票']}}</b></td><td>{{d['转股面值']}}</td><td>{{d['零头面值']}}</td>
+                  <td>{{d['折现现金_CNY']}}</td><td>{{d['保留债券面值']}}</td><td>{{d['保留张数']}}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__head"><h2>债券维度对账</h2><span>{{run.reconciliation.bond_lines|length}} 只</span></div>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>债券</th><th>持仓合计</th><th>转股</th><th>零头</th><th>保留</th><th>守恒</th></tr></thead>
+              <tbody>
+              {% for b in run.reconciliation.bond_lines %}
+                <tr class="{{'diff' if b['守恒']!='是'}}">
+                  <td>{{b['债券']}}</td><td>{{b['持仓合计']}}</td><td>{{b['转股面值合计']}}</td>
+                  <td>{{b['零头合计']}}</td><td>{{b['保留面值合计']}}</td><td>{{b['守恒']}}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__head"><h2>复核与发布</h2><span>r{{run.revision}}</span></div>
+          <div class="panel__body">
+            {% for c in run.reconciliation.checks %}
+            <div class="entry {{'diff' if c['结论']!='相符'}}">
+              <span>{{c['对账项']}}<br><small>{{c['证据']}}</small></span><b>{{c['结论']}}</b>
+            </div>
+            {% endfor %}
+            <div class="actions">
+              <button data-check="通过" {{'disabled' if published}}>复核通过</button>
+              <button data-check="退回" {{'disabled' if published}}>退回</button>
+              <button id="publish" class="primary" {{'disabled' if published}}>{{'已发布' if published else '发布批次'}}</button>
+              <button id="print">打印</button>
+            </div>
+            <div id="error" class="error" role="status"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__head"><h2>输入数据</h2><span>组合CSV</span></div>
+          <div class="panel__body">
+            <details><summary>编辑数据</summary>
+              <textarea id="conv-source" aria-label="转股组合CSV" style="width:100%;height:220px">{{sample}}</textarea>
+              <div class="actions">
+                <button id="submit">提交文本</button>
+                <input id="sourcefile" type="file" accept=".csv" aria-label="转股文件">
+                <button id="upload">上传</button>
+              </div>
+            </details>
+          </div>
+        </section>
+      </div>
+    </main>
+    <footer class="statusbar">
+      <span>{{run.manifest.created_at}} / UTC</span>
+      <span>SHA256 {{run.manifest.sha256[:14]}}</span>
+    </footer>
+  </div>
+</div>
+<script type="application/json" id="conv-run">{{ {'run_id':run.manifest.run_id,'revision':run.revision,'balanced':run.reconciliation.balanced}|tojson }}</script>
+</body>
+</html>
